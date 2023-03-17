@@ -1,0 +1,67 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-03-11"
+---
+```{r}
+library(tidyverse)
+library(janitor)
+
+
+
+
+
+
+
+```
+
+```{r}
+decathlon <- read_rds('raw_data/decathlon.rds')
+decathlon
+view(decathlon)
+
+```
+
+```{r}
+# checking if the tibble has row names and removing them
+
+has_rownames(decathlon)
+
+decathalon_rows_rename <- remove_rownames(decathlon)
+
+view(decathalon_rows_ex)
+
+```
+```{r}
+# checking the column names
+
+glimpse(decathalon_rows_ex)
+```
+```{r}
+# better column header names using Janitor packagae function
+
+decathalon_clean_col <- clean_names(decathalon_rows_ex)
+
+glimpse(decathalon_clean_col)
+
+
+
+```
+
+```{r}
+
+# checking for NA in data
+
+is.na(decathalon_clean_col)
+
+# no NA's found in the data
+```
+
+```{r}
+# Writing the file to .csv
+
+write_csv(decathalon_clean_col , "clean_data/decathalon_clean_data")
+
+
+```
+

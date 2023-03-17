@@ -1,0 +1,426 @@
+---
+title: " Data Cleaning "
+output: html_document
+date: "2023-03-13"
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(countrycode)
+library(passport)
+library(stringi)
+
+```
+
+```{r}
+
+# Reading files in XL
+
+candy_2015 <- read_excel("dirty_data/boing-boing-candy-2015.xlsx")
+candy_2016 <- read_excel("dirty_data/boing-boing-candy-2016.xlsx")
+candy_2017 <- read_excel("dirty_data/boing-boing-candy-2017.xlsx")
+```
+```{r}
+# deleted columns based on strings 
+
+candy_2015_del_col <- candy_2015 %>% 
+    select(-c("Please estimate the degrees of separation you have from the following folks [Beyoncé Knowles]",
+   "Please estimate the degrees of separation you have from the following folks [Donald Trump]",
+ "Please estimate the degrees of separation you have from the following folks [Hillary Clinton]"))
+```
+
+```{r}
+
+# delete multiple columns by index using dplyr by using column numbers and range
+
+candy_2015_del_range <- select(candy_2015_del_col, -c(116:121),
+                               -c(100:113),
+                               -c(93:95),
+                               -c(88, 57, 45, 41, 33,28 ,26, 23, 18,16 ,10))
+
+##counts columns numbers so we can compare
+ncol(candy_2015_del_col)
+ncol(candy_2015_del_range)
+```
+```{r}
+# deleting columns for 2016
+
+candy_2016_del_range <- select(candy_2016, 
+                               -c(109:123), 
+                               -c(104, 105, 101, 102, 79, 49, 43, 46, 31, 32, 27, 21, 22, 12, 15, 13))
+
+##counts columns numbers so we can compare
+ncol(candy_2016) 
+ncol(candy_2016_del_range)
+```
+```{r}
+# deleting columns for 2017
+
+candy_2017_del_range <- select(candy_2017, -c(110:120), 
+                               -c(107, 108, 104, 105, 81, 43, 31, 26, 27, 15, 13, 114, 21, 12, 49))
+
+##counts columns numbers so we can compare
+ncol(candy_2017) 
+ncol(candy_2017_del_range)
+```
+```{r}
+
+# candy_2015 does have a country column 
+
+unique(candy_2017$"Q4: COUNTRY")
+
+unique(candy_2016$"Which country do you live in?")
+
+
+```
+```{r}
+df_col1 <- stri_replace_all_regex(candy_2016_del_range$"Which country do you live in?",
+                                  pattern=c("(?i)USA", "us", "usa", "Us", "Us", "US", "Murica", "United States", "united states", "Usa", "United staes", "United States of America", "United states", "u.s.a.", "USAUSAUSA", "america", "U.S.A.", "unhinged states", "united states of america", "Unites States", "US of A", "The United States", "North Carolina", "Unied States", "u.s.", "The United States of America", "unite states", "U.S.", "USA? Hard to tell anymore..", "'merica", "usas", "Pittsburgh", "United State", "New York", "Trumpistan", "United Sates", "USa", "I pretend to be from Canada, but I am really from the United States.", "Ahem....Amerca", "United Stated", "New Jersey", "California", "United ststes", "America", "United Statss", "murrika", "USA! USA! USA!", "USAA", "Alaska", "united States", "N. America", "USSA", "u s a", "United Statea", "united ststes", "USA USA USA!!!!"),
+                                  replacement=c("United States"),
+                                  vectorize=FALSE)
+str_remove (df_col1,)
+df_col1
+```
+```{r}
+df_col1 <- stri_replace_all_regex(candy_2017_del_range$"Q4: COUNTRY",
+                                  pattern=c("(?i)USA", "(?i)us$", "Murica$", "(?i)USA!", "United States$", "united states$", "United staes$", "United States of America$", "United states$", "u.s.a.$", "USAUSAUSA$", "america$", "(?i)U.S.A.$", "(?i)u.s.$", "unhinged states$", "united states of america$", "Unites States$", "US of A$", "The United States$", "North Carolina$", "Unied States$", "The United States of America$", "unite states$", "USA? Hard to tell anymore..$", "'merica$", "Pittsburgh$", "United State$", "New York", "Trumpistan", "United Sates", "I pretend to be from Canada, but I am really from the United States.", "Ahem....Amerca", "United Stated", "New Jersey", "California", "United ststes", "America", "United Statss", "murrika", "USA! USA! USA!$", "USAA$", "Alaska", "united States", "N. America", "USSA", "u s a$", "United Statea", "united ststes", "USA USA USA!!!!"),
+                                  replacement=c("United States"),
+                                  vectorize=FALSE)
+
+
+df_col1
+```
+
+```{r}
+
+candy_2016_del_range_country <- candy_2016_del_range %>% 
+
+ mutate(Country = recode( `Which country do you live in?`, 
+"UK" = "United Kingdom", 
+"england" = "United Kingdom",
+"uk" = "United Kingdom",
+"England" = "United Kingdom",
+"canada" = "Canada",
+"usa" = "United States", 
+"US" = "United States",
+"USA" = "United States", 
+"United States of America" = "United States",
+"uSA" = "United States", 
+"united states" = "United States", 
+"United States" = "United States", 
+"us" = "United States", 
+"USSA" = "United States", 
+"U.S.A." = "United States", 
+"Murica" = "United States", 
+"USA!" = "United States", 
+"USA (I think but it's an election year so who can really tell)" = "United States", 
+"Usa" = "United States", 
+"U.S." = "United States", 
+"Us" = "United States", 
+"Units States" = "United States", 
+"America" = "United States", 
+"United states" = "United States", 
+"USA USA USA" = "United States", 
+"the best one - usa" = "United States", 
+"USA! USA! USA!" = "United States", 
+"u.s." = "United States", 
+"united states of america" = "United States", 
+"The Yoo Ess of Aaayyyyyy" = "United States", 
+"god's country" = "United States", 
+"USA!!!!!!" = "United States", 
+"USA! USA!" = "United States", 
+"United Sates" = "United States", 
+"Sub-Canadian North America... 'Merica" = "United States", 
+"Trumpistan" = "United States", 
+"U.s." = "United States", 
+"Merica" = "United States", 
+"UNited States" = "United States", 
+"United Stetes" = "United States", 
+"america" = "United States", 
+"USA USA USA USA" = "United States", 
+"United  States of America" = "United States", 
+"United State" = "United States"),.after = `Which country do you live in?`)
+
+candy_2016_del_range
+
+
+```
+```{r}
+
+# Changed the various names for US, UK and Canada to United States of America, United Kingdom and Canada respectively
+
+candy_2017_del_range_country <-candy_2017_del_range %>% 
+    mutate(Country = recode(`Q4: COUNTRY`,
+"UK" = "United Kingdom", 
+"england" = "United Kingdom",
+"uk" = "United Kingdom",
+"England" = "United Kingdom",
+"endland" = "United Kingdom",
+"U.K" = "United Kingdom",
+"canada" = "Canada",
+"Can" = "Canada",
+"CANADA" = "Canada",
+"USA" = "United States", 
+"us"= "United States", 
+"usa"= "United States", 
+"Us"= "United States", 
+"Us"= "United States", 
+"US"= "United States", 
+"Murica"= "United States", 
+"United States"= "United States", 
+"united states"= "United States", 
+"Usa"= "United States", 
+"United staes"= "United States", 
+"United States of America"= "United States", 
+"United states"= "United States", 
+"u.s.a."= "United States", 
+"USAUSAUSA"= "United States", 
+"america"= "United States", 
+"U.S.A."= "United States", 
+"unhinged states"= "United States", 
+"united states of america"= "United States", 
+"Unites States"= "United States", 
+"US of A"= "United States", 
+"The United States"= "United States", 
+"North Carolina"= "United States", 
+"Unied States"= "United States", 
+"U S"= "United States", 
+"u.s."= "United States", 
+"The United States of America"= "United States", 
+"unite states"= "United States", 
+"U.S."= "United States", 
+"USA? Hard to tell anymore.."= "United States", 
+"'merica"= "United States", 
+"usas"= "United States", 
+"Pittsburgh"= "United States", 
+"United State"= "United States", 
+"New York"= "United States", 
+"Trumpistan"= "United States", 
+"United Sates"= "United States", 
+"USa"= "United States", 
+"I pretend to be from Canada, but I am really from the United States."= "United States", 
+"Ahem....Amerca"= "United States", 
+"United Stated"= "United States", 
+"New Jersey"= "United States", 
+"California"= "United States", 
+"United ststes"= "United States", 
+"America"= "United States", 
+"United Statss"= "United States", 
+"murrika"= "United States", 
+"USA! USA! USA!"= "United States", 
+"USAA"= "United States", 
+"Alaska"= "United States", 
+"united States"= "United States", 
+"N. America"= "United States", 
+"USSA"= "United States", 
+"u s a"= "United States", 
+"United Statea"= "United States", 
+"united ststes"= "United States", 
+"USA USA USA!!!!"= "United States"),.after = `Q4: COUNTRY`)
+
+candy_2017_del_range
+```
+
+```{r}
+
+# Named the countries other than UK,USA and Canada as OTHER
+
+candy_2016_country_clean <- candy_2016_del_range_country %>% 
+
+ mutate(Country = if_else( Country == "United States", "United States",
+                    ifelse(Country == "United Kingdom", "United Kingdom",
+                    ifelse(Country == "Canada", "Canada", "OTHER"
+                    ))))
+candy_2016_country_clean
+
+candy_2017_country_clean <- candy_2017_del_range_country %>% 
+    
+     mutate(Country = if_else( Country == "United States", "United States",
+                    ifelse(Country == "United Kingdom", "United Kingdom",
+                    ifelse(Country == "Canada", "Canada", "OTHER"
+                    )))) 
+candy_2017_country_clean
+```
+```{r}
+# Coverting the age cloumn from charcter to integer.
+
+candy_2015_age <- candy_2015_del_range %>% mutate(age = as.integer(`How old are you?`),.after = `Timestamp`)
+
+candy_2016_age <- candy_2016_country_clean %>% mutate(age = as.integer(`How old are you?`),.after = `Your gender:`)
+
+candy_2017_age <- candy_2017_country_clean %>% mutate(age = as.integer(`Q3: AGE`),.after = `Q2: GENDER`)
+
+candy_2015_age
+candy_2016_age
+candy_2017_age
+```
+
+```{r}
+# Changing the names to snake_case as 2015 and 2016 candy names match 
+
+candy_2015_candy_name <- janitor::clean_names(candy_2015_age)
+candy_2016_candy_name <- janitor::clean_names(candy_2016_age)
+
+
+candy_2015_candy_name
+candy_2016_candy_name
+```
+
+```{r}
+# Renaming candy names column in 2017 and converting the name to snake case
+
+candy_2017_candy_name_half <- candy_2017_age %>%
+rename_with(str_remove,"Q6 \\|", .cols= starts_with("Q6 |"))
+
+candy_2017_candy_name <- janitor::clean_names(candy_2017_candy_name_half)                                 
+     
+candy_2017_candy_name
+
+```
+```{r}
+# Changing timestamp column to Year
+
+candy_2015_year <- candy_2015_candy_name %>% 
+    
+    mutate(Year= format(as.Date(candy_2015_candy_name$timestamp,    format="%d/%m/%Y"),"%Y"),.after = timestamp)
+
+
+
+ccandy_2016_year <- candy_2016_candy_name %>% 
+    
+    mutate(Year= format(as.Date(candy_2016_candy_name$timestamp,    format="%d/%m/%Y"),"%Y"),.after = timestamp)
+
+
+
+candy_2017_year <- candy_2017_candy_name %>%
+    mutate(Year = "2017", .after = "internal_id")
+
+candy_2015_year
+candy_2016_year
+candy_2017_year
+
+```
+```{r}
+# Renaming the gender column in 2016,2017 to gender
+candy_2016_gender <- candy_2016_year %>% 
+    rename("gender" = "your_gender")
+
+candy_2017_gender <- candy_2017_year %>% 
+    rename("gender" = "q2_gender")
+
+candy_2016_gender
+candy_2017_gender
+
+```
+
+```{r}
+names(candy_2015_year)
+names(candy_2016_gender)
+names(candy_2017_gender)
+
+```
+
+```{r}
+str(candy_2016_gender)
+```
+
+
+```{r}
+candy_2015_test <- names(candy_2015_year)
+candy_2016_test <- names(candy_2016_gender)
+
+intersect(candy_2015_test, candy_2016_test)
+
+setdiff(candy_2015_test, candy_2016_test)
+
+view(candy_2016_test)
+
+```
+
+```{r}
+
+# Unifying candy names in 2015 and 2016
+candy_2015_year
+candy_2016_gender
+
+rename_candy_2016 <- candy_2016_gender %>% 
+    rename ("bonkers"= "bonkers_the_candy",
+            "box_o_raisins" = "boxo_raisins",
+            "dark_chocolate_hershey" = "hersheys_dark_chocolate",
+            "sweetums" = "sweetums_a_friend_to_diabetes"
+            )
+
+rename_candy_2016
+```
+```{r}
+candy_2017_test <- names(candy_2017_gender)
+
+candy_2016_renamed_test <- names(rename_candy_2016)
+
+setdiff(candy_2017_test, candy_2016_renamed_test)
+
+
+view(candy_2016_renamed_test)
+```
+```{r}
+
+# Unifying candy names in 2016 and 2017
+
+candy_2016_gender
+candy_2017_gender
+
+
+rename_candy_2017 <- candy_2017_gender %>% 
+    rename ("bonkers"= "bonkers_the_candy",
+            "box_o_raisins" = "boxo_raisins",
+            "dark_chocolate_hershey" = "hersheys_dark_chocolate",
+            "sweetums" = "sweetums_a_friend_to_diabetes"
+                   )
+
+view(rename_candy_2017)
+```
+
+```{r}
+# Combining all the three datasets
+
+combine_candy <- bind_rows(candy_2015_year, rename_candy_2016, rename_candy_2017)
+
+combine_candy
+
+ncol(candy_2015_year)
+ncol(rename_candy_2016)
+ncol(rename_candy_2017)
+ncol(combine_candy)
+
+candy_2015_year
+
+```
+
+```{r}
+#Deleting columns from th combined candy data
+
+clean_candy <- select(combine_candy, -c (1,4,24,29,33,49,81,82,85,86,87,88,
+                                         91,93,95,74,112,113,114,116,117,120,
+                                         121,8,115))
+
+# Unifying the column are you trick or treating.
+
+clean_candy_final <- clean_candy %>% 
+    
+    unite("are_you_trick_or_treating", c("are_you_going_actually_going_trick_or_treating_yourself",
+           "q1_going_out")) %>% 
+    
+    mutate(are_you_trick_or_treating = str_remove_all(are_you_trick_or_treating, "_NA")) %>% 
+    mutate(are_you_trick_or_treating = str_remove_all(are_you_trick_or_treating, "NA_"))
+
+
+names(clean_candy)                     
+names(clean_candy_final)  
+ncol(clean_candy_final)
+
+```
+```{r}
+write_csv(clean_candy_final, "clean_data/clean_candy.csv")
+```
+

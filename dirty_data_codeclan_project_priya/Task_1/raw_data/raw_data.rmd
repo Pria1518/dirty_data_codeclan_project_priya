@@ -1,0 +1,11 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(readr)
+
+decathlon <- read_rds('Task 1/raw_data/decathlon.rds')
+```
+
